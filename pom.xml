@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>tinybixo</groupId>
 	<artifactId>tinybixo</artifactId>
-	<name>TinyBixo</name>
+	<name>tinybixo</name>
 	<licenses>
 		<license>
 			<name>The MIT License</name>
@@ -15,8 +15,8 @@
 	<url>http://openbixo.org</url>
 	<description>TinyBixo is a subset of Bixo classes used to crawl webpages.  Unlike Bixo, it has very limited dependencies.  We created this project because we liked how Bixo wrapped Apache HTTP Client, however did not Hadoop or Lucene functionality.</description>
 	<scm>
-		<connection>scm:git:git://github.com/bixo/bixo.git</connection>
-		<url>scm:git:git://github.com/bixo/bixo.git</url>
+		<connection>scm:git:git://github.com/bixo/TinyBixo.git</connection>
+		<url>scm:git:git://github.com/bixo/TinyBixo.git</url>
 	</scm>
 	<packaging>jar</packaging>
 	

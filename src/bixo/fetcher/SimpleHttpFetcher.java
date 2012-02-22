@@ -92,7 +92,6 @@ import bixo.config.UserAgent;
 import bixo.config.FetcherPolicy.RedirectMode;
 
 import bixo.datum.HttpHeaders;
-import bixo.datum.Payload;
 import bixo.exceptions.AbortedFetchException;
 import bixo.exceptions.AbortedFetchReason;
 import bixo.exceptions.BaseFetchException;
@@ -369,14 +368,14 @@ public class SimpleHttpFetcher extends BaseFetcher {
   public FetchedResult fetch(String url) throws BaseFetchException {
     HttpRequestBase request = new HttpGet();
     request.setHeader("User-Agent", _userAgent.getUserAgentString());
-    return fetch(request, url, new Payload());
+    return fetch(request, url);
   }
 
-  public FetchedResult fetch(HttpRequestBase request, String url, Payload payload) throws BaseFetchException {
+  public FetchedResult fetch(HttpRequestBase request, String url) throws BaseFetchException {
     init();
 
     try {
-      return doRequest(request, url, payload);
+      return doRequest(request, url);
     } catch (BaseFetchException e) {
       if (LOGGER.isTraceEnabled()) {
         LOGGER.trace(String.format("Exception fetching %s", url), e);
@@ -385,7 +384,7 @@ public class SimpleHttpFetcher extends BaseFetcher {
     }
   }
 
-  private FetchedResult doRequest(HttpRequestBase request, String url, Payload payload) throws BaseFetchException {
+  private FetchedResult doRequest(HttpRequestBase request, String url) throws BaseFetchException {
     LOGGER.trace("Fetching " + url);
 
     HttpResponse response;
@@ -577,7 +576,7 @@ public class SimpleHttpFetcher extends BaseFetcher {
       }
     }
 
-    return new FetchedResult(url, redirectedUrl, System.currentTimeMillis(), headerMap, content, contentType, (int) readRate, payload, newBaseUrl,
+    return new FetchedResult(url, redirectedUrl, System.currentTimeMillis(), headerMap, content, contentType, (int) readRate, newBaseUrl,
         numRedirects, hostAddress);
   }
 

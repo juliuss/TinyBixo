@@ -21,6 +21,12 @@ public class Test {
       System.out.println(html);
       System.out.println(result.getNumRedirects());
       System.out.println(result.getFetchedUrl());
+      
+      result = fetcher.fetch("https://www.google.com/");
+      html = new String(result.getContent());
+      System.out.println(html);
+      System.out.println(result.getNumRedirects());
+      System.out.println(result.getFetchedUrl());
      
     } catch (BaseFetchException e) {
       e.printStackTrace();
