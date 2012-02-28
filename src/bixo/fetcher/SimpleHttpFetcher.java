@@ -30,8 +30,11 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
@@ -51,13 +54,16 @@ import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
+import org.apache.http.NameValuePair;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.ProtocolException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.RedirectException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.params.ClientParamBean;
@@ -78,6 +84,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.DefaultRedirectHandler;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
@@ -365,17 +372,23 @@ public class SimpleHttpFetcher extends BaseFetcher {
     _maxRetryCount = maxRetryCount;
   }
 
-  public FetchedResult fetch(String url) throws BaseFetchException {
+  public FetchedResult get(String url) throws BaseFetchException {
     HttpRequestBase request = new HttpGet();
     request.setHeader("User-Agent", _userAgent.getUserAgentString());
-    return fetch(request, url);
+    return fetch(request, url, null);
+  }
+  
+  public FetchedResult post(String url, List<Tuple2<?,?>> data) throws BaseFetchException {
+    HttpRequestBase request = new HttpPost();
+    request.setHeader("User-Agent", _userAgent.getUserAgentString());
+    return fetch(request, url, data);
   }
 
-  public FetchedResult fetch(HttpRequestBase request, String url) throws BaseFetchException {
+  public FetchedResult fetch(HttpRequestBase request, String url, List<Tuple2<?,?>> data) throws BaseFetchException {
     init();
 
     try {
-      return doRequest(request, url);
+      return doRequest(request, url, data);
     } catch (BaseFetchException e) {
       if (LOGGER.isTraceEnabled()) {
         LOGGER.trace(String.format("Exception fetching %s", url), e);
@@ -384,7 +397,7 @@ public class SimpleHttpFetcher extends BaseFetcher {
     }
   }
 
-  private FetchedResult doRequest(HttpRequestBase request, String url) throws BaseFetchException {
+  private FetchedResult doRequest(HttpRequestBase request, String url, List<Tuple2<?,?>> data) throws BaseFetchException {
     LOGGER.trace("Fetching " + url);
 
     HttpResponse response;
@@ -408,6 +421,15 @@ public class SimpleHttpFetcher extends BaseFetcher {
       URI uri = new URI(url);
       request.setURI(uri);
       request.setHeader("Host", uri.getHost());
+      
+      //collect post data if available
+      if (request instanceof HttpPost && data != null) {
+        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
+        for (Tuple2<?,?> e : data) {
+          nameValuePairs.add(new BasicNameValuePair(URLEncoder.encode(e.getKey().toString(),"utf-8"),URLEncoder.encode(e.getValue().toString(),"utf-8")));
+        }
+        ((HttpPost)(request)).setEntity(new UrlEncodedFormEntity(nameValuePairs));
+      }
 
       readStartTime = System.currentTimeMillis();
       response = _httpClient.execute(request, localContext);
@@ -421,7 +443,7 @@ public class SimpleHttpFetcher extends BaseFetcher {
       if ((httpStatus < 200) || (httpStatus >= 300)) {
         // We can't just check against SC_OK, as some wackos return 201, 202,
         // etc
-        throw new HttpFetchException(url, "Error fetching " + url, httpStatus, headerMap);
+        throw new HttpFetchException(url, "Error fetching " + url + " due to http status code "+httpStatus, httpStatus, headerMap);
       }
 
       redirectedUrl = extractRedirectedUrl(url, localContext);

@@ -10,19 +10,19 @@ public class Test {
   public static void main(String args[]) {
     SimpleHttpFetcher fetcher = new SimpleHttpFetcher(50, userAgent);
     try {
-      FetchedResult result = fetcher.fetch("http://www.google.com");
+      FetchedResult result = fetcher.get("http://www.google.com");
       String html = new String(result.getContent());
       System.out.println(html);
       System.out.println(result.getNumRedirects());
       System.out.println(result.getFetchedUrl());
       
-      result = fetcher.fetch("http://www.bhphotovideo.com/c/buy/Camcorders/ci/1871/N/4294548093");
+      result = fetcher.get("http://www.bhphotovideo.com/c/buy/Camcorders/ci/1871/N/4294548093");
       html = new String(result.getContent());
       System.out.println(html);
       System.out.println(result.getNumRedirects());
       System.out.println(result.getFetchedUrl());
       
-      result = fetcher.fetch("https://www.google.com/");
+      result = fetcher.get("https://www.google.com/");
       html = new String(result.getContent());
       System.out.println(html);
       System.out.println(result.getNumRedirects());
