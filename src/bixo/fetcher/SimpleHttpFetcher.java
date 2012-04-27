@@ -371,24 +371,32 @@ public class SimpleHttpFetcher extends BaseFetcher {
   public void setMaxRetryCount(int maxRetryCount) {
     _maxRetryCount = maxRetryCount;
   }
-
+  
   public FetchedResult get(String url) throws BaseFetchException {
+    return get(url, null);
+  }
+
+  public FetchedResult get(String url, List<Tuple2<?,?>> headers) throws BaseFetchException {
     HttpRequestBase request = new HttpGet();
     request.setHeader("User-Agent", _userAgent.getUserAgentString());
-    return fetch(request, url, null);
+    return fetch(request, url, null, headers);
   }
   
   public FetchedResult post(String url, List<Tuple2<?,?>> data) throws BaseFetchException {
+    return post(url, data, null);
+  }
+  
+  public FetchedResult post(String url, List<Tuple2<?,?>> data, List<Tuple2<?,?>> headers) throws BaseFetchException {
     HttpRequestBase request = new HttpPost();
     request.setHeader("User-Agent", _userAgent.getUserAgentString());
-    return fetch(request, url, data);
+    return fetch(request, url, data, headers);
   }
 
-  public FetchedResult fetch(HttpRequestBase request, String url, List<Tuple2<?,?>> data) throws BaseFetchException {
+  public FetchedResult fetch(HttpRequestBase request, String url, List<Tuple2<?,?>> data, List<Tuple2<?,?>> headers) throws BaseFetchException {
     init();
 
     try {
-      return doRequest(request, url, data);
+      return doRequest(request, url, data, headers);
     } catch (BaseFetchException e) {
       if (LOGGER.isTraceEnabled()) {
         LOGGER.trace(String.format("Exception fetching %s", url), e);
@@ -397,7 +405,7 @@ public class SimpleHttpFetcher extends BaseFetcher {
     }
   }
 
-  private FetchedResult doRequest(HttpRequestBase request, String url, List<Tuple2<?,?>> data) throws BaseFetchException {
+  private FetchedResult doRequest(HttpRequestBase request, String url, List<Tuple2<?,?>> data, List<Tuple2<?,?>> headers) throws BaseFetchException {
     LOGGER.trace("Fetching " + url);
 
     HttpResponse response;
@@ -422,6 +430,12 @@ public class SimpleHttpFetcher extends BaseFetcher {
       request.setURI(uri);
       request.setHeader("Host", uri.getHost());
       
+      if (headers!=null) {
+        for (Tuple2<?,?> t : headers) {
+          request.setHeader(t.getKey().toString(),t.getValue().toString());
+        }
+      }
+      
       //collect post data if available
       if (request instanceof HttpPost && data != null) {
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
@@ -434,8 +448,8 @@ public class SimpleHttpFetcher extends BaseFetcher {
       readStartTime = System.currentTimeMillis();
       response = _httpClient.execute(request, localContext);
 
-      Header[] headers = response.getAllHeaders();
-      for (Header header : headers) {
+      Header[] responseHeaders = response.getAllHeaders();
+      for (Header header : responseHeaders) {
         headerMap.add(header.getName(), header.getValue());
       }
 
